@@ -25,3 +25,4 @@ Enable Docker:
 sudo make build
 sudo make pull
 sudo make pack-benchmark
+sudo make test-submission
