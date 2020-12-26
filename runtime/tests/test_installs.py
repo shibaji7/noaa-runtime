@@ -18,7 +18,7 @@ packages = [
     "xgboost",
     # ADD ADDITIONAL REQUIREMENTS BELOW HERE #
     ##########################################
-    "keras"
+    "keras",
 ]
 
 for package in packages:
