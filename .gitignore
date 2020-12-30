@@ -4,6 +4,8 @@
 __pycache__
 
 data/*.csv
+benchmark/algorithms/*
+RMSE_estimates_local/*
 
 # OSX
 .DS_Store

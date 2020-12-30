@@ -16,8 +16,8 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--desc", default="Algorithm description", help="Description in terms of training")
     args = parser.parse_args()
 
-    os.system("mkdir -p RMSE_estimates_local/{algo}/{ds}/".format(algo=args.algo, ds=algo.ds))
-    os.system("cp submission/submission.csv RMSE_estimates_local/{algo}/{ds}/".format(algo=args.algo, ds=algo.ds))
+    os.system("mkdir -p RMSE_estimates_local/{algo}/{ds}/".format(algo=args.algo, ds=args.ds))
+    os.system("cp submission/submission.csv RMSE_estimates_local/{algo}/{ds}/".format(algo=args.algo, ds=args.ds))
     
     sub = pd.read_csv("submission/submission.csv")
     sub.timedelta = pd.to_timedelta(sub.timedelta)
@@ -40,6 +40,6 @@ if __name__ == "__main__":
         "RMSE(t0)": "%.4f"%(np.sqrt(np.mean((new_df.dst-new_df.t0)**2))),
         "RMSE(t1)": "%.4f"%(np.sqrt(np.mean((dst_t1-t1)**2)))
     }
-    with open("RMSE_estimates_local/{algo}/{ds}/README.json".format(algo=args.algo, ds=algo.ds), "w") as f:
+    with open("RMSE_estimates_local/{algo}/{ds}/README.json".format(algo=args.algo, ds=args.ds), "w") as f:
         o = json.dumps(rdme, sort_keys=True, indent=4)
         f.write(o)
