@@ -238,7 +238,8 @@ def XGB(
     sel_df = solar_wind_7d.loc[tdelta_range.min():tdelta_range.max()]
     sel_df.replace([np.inf, -np.inf], np.nan, inplace=True)
     sel_df = sel_df.join(empty_df,how="outer")
-    sel_df = sel_df.resample("1min").ffill()
+    sel_df = sel_df.interpolate(method='linear', axis=0).ffill().bfill()
+#     sel_df = sel_df.resample("1min").ffill()
 #     sel_df.sort_index(inplace=True)
 #     print("df-->",sel_df.shape)
     # create bt and other vars
