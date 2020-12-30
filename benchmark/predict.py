@@ -7,7 +7,7 @@ import datetime as dt
 from models import LSTM, LR, XGB
 
 REG_NAME = "LR" # [LR, LSTM, GB, XGB]
-DATA_SET = "72h" # [0.5h, 1h, 2h, 6h, 24h, 72h]
+DATA_SET = "0.5h" # [0.5h, 1h, 2h, 6h, 24h, 72h]
 
 # THIS MUST BE DEFINED FOR YOUR SUBMISSION TO RUN
 def predict_dst(

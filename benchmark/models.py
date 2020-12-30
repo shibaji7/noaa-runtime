@@ -151,15 +151,23 @@ def load_LR_model(fname, ds):
     model = skljson.from_json("algorithms/LR/{ds}/".format(ds=ds) + fname)
     return model
 
+def get_ssn_stats():
+    #x = pd.read_csv("../data/sunspots.csv")
+    mean, std = 58.095833, 52.517753#np.nanmean(x.smoothed_ssn), np.nanstd(x.smoothed_ssn)
+    return mean, std
+
 def pandas_ts_nan_helper(
     dat: pd.DataFrame(),
     params: list,
     latest_sunspot_number: float,
+    ds: str,
 ) -> pd.DataFrame():
     """
     Replace nans and 1H resample
     """
     dat["ssn"] = latest_sunspot_number
+    dat["bt"] = np.sqrt(np.square(dat["by_gsm"]) + np.square(dat["bz_gsm"]))
+    dat["theta_c"] = np.round(np.arctan2(dat["by_gsm"], dat["bz_gsm"]), 2) % (2*np.pi)
     dat["dPhi_dt"] = (dat["speed"]**(4./3)) * (dat["bt"] ** (2./3)) * (np.sin(dat["theta_c"] / 2.))**(8./3) # TODO
     for p in params:
         u = np.array(dat[p])
@@ -173,8 +181,13 @@ def pandas_ts_nan_helper(
     tunitmap = {"0.5h": 31, "1h": 61, "2h": 121, "6h": 361, "24h": 1441, "72h": 4321 }
     dat = dat.resample("60s").interpolate().reset_index()
     dat = dat[dat.time <= dt.datetime(2000,1,1) + dt.timedelta(minutes=tunitmap[ds])]
-    print(dat.median())
-    return dat.iloc[0]
+    for p in params:
+        if p == "ssn": mean, std = get_ssn_stats()
+        else: mean, std = np.nanmean(dat[p]), np.nanstd(dat[p])
+        dat[p] = (dat[p] - mean) /std
+    dat = dat.median()
+    Xs = [dat[p] for p in params]
+    return np.array(Xs)
 
 def LR(
     solar_wind_7d: pd.DataFrame,
@@ -182,29 +195,27 @@ def LR(
     latest_sunspot_number: float,
     ds: str,
 ) -> Tuple[float, float]:
-    params = ["bt", "bz_gse", "by_gse", "speed", "density", "dPhi_dt", "ssn"]
-    sw = pandas_ts_nan_helper(solar_wind_7d, params, latest_sunspot_number, ds)
-    #Xs = sw[params].values
-    #Xs = Xs.reshape((1, len(params)))
-    #print(" Shape: ", Xs.shape)
-    #dst = []
+    params = ["bt", "bz_gsm", "by_gsm", "speed","density", "dPhi_dt", "ssn"]
+    Xs = pandas_ts_nan_helper(solar_wind_7d, params, latest_sunspot_number, ds)
+    Xs = Xs.reshape((1, len(params)))
+    print(" Shape: ", Xs.shape)
+    dst = []
     
-    #for t in range(2):
-    #    print(" T(%s) instance ... "%t)
-    #    clf = load_LR_model("clf_t%d.json"%t, ds)
-    #    reg_0, reg_1 = load_LR_model("reg_t%d_0.json"%t, ds), load_LR_model("reg_t%d_1.json"%t, ds)
-    #    tag = ((clf.predict_proba(Xs) < 0.5).astype(int))[0,0]
-    #    print( "Prob. (No-Storm):%.2f"%clf.predict_proba(Xs)[0,0], " - Tag: ", tag )
-    #    if tag == 0: dst.append(reg_0.predict(Xs)[0])
-    #    if tag == 1: dst.append(reg_1.predict(Xs)[0])
-    #print(" Predictions Dst - ",tuple(dst))
+    for t in range(2):
+        print(" T(%s) instance ... "%t)
+        clf = load_LR_model("clf_t%d.json"%t, ds)
+        reg_0, reg_1 = load_LR_model("reg_t%d_0.json"%t, ds), load_LR_model("reg_t%d_1.json"%t, ds)
+        tag = ((clf.predict_proba(Xs) < 0.5).astype(int))[0,0]
+        print( "Prob. (No-Storm):%.2f"%clf.predict_proba(Xs)[0,0], " - Tag: ", tag )
+        if tag == 0: dst.append(reg_0.predict(Xs)[0])
+        if tag == 1: dst.append(reg_1.predict(Xs)[0])
+    print(" Predictions Dst - ",tuple(dst))
     
-    #prediction_at_t0, prediction_at_t1 = dst[0], dst[1]
-    prediction_at_t0, prediction_at_t1 = -15., -15.
-
-    prediction_at_t0 = check_dst_lims(prediction_at_t0)
-    prediction_at_t1 = check_dst_lims(prediction_at_t1)
-    
+    try:
+        prediction_at_t0, prediction_at_t1 = dst[0], dst[1]
+        prediction_at_t0, prediction_at_t1 = check_dst_lims(prediction_at_t0), check_dst_lims(prediction_at_t1)
+    except: 
+        print(" Exception occured: Default value passed.")
     # Optional check for unexpected values
     if not np.isfinite(prediction_at_t0): prediction_at_t0 = -15.
     if not np.isfinite(prediction_at_t1): prediction_at_t1 = -15.
