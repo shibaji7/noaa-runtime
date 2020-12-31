@@ -224,33 +224,33 @@ def XGB(
     ### Change these parameters as needed
     ### Change these parameters as needed
     
-    # create a timedelta range
+    # the original SW df may not have the timedelta index between 0 and 7 days!
+    # so we'll set this index manually
+    new_index = pd.timedelta_range(start='0 minutes', end='10079 minutes', freq='1min')
+    solar_wind_7d.set_index(new_index, inplace=True)
+    
+    # create a timedelta range for the three days!
     end_minutes = str(ndays_sw_input * 24 * 60) + ' minutes'
 #     solar_wind_7d.set_index()
     tdelta_range = pd.timedelta_range(start='0 minutes', end=end_minutes, freq='1min')
     # create a empty DF with this index
-    empty_df = pd.DataFrame(index=tdelta_range)
+    empty_col = np.ones(tdelta_range.shape[0])
+    empty_df = pd.DataFrame(data=empty_col,index=tdelta_range, columns=["empty_col"])
     
-    solar_wind_7d.sort_index(inplace=True)
     solar_wind_7d = solar_wind_7d.interpolate(method='linear', axis=0).ffill().bfill()
-#     solar_wind_7d = solar_wind_7d.resample("1min").ffill()#.reset_index()
-    print(solar_wind_7d["bz_gsm"].min(), solar_wind_7d["bz_gsm"].median(), solar_wind_7d["bz_gsm"].max())
     sel_df = solar_wind_7d.loc[tdelta_range.min():tdelta_range.max()]
-    sel_df.replace([np.inf, -np.inf], np.nan, inplace=True)
     sel_df = sel_df.join(empty_df,how="outer")
-    sel_df = sel_df.interpolate(method='linear', axis=0).ffill().bfill()
-#     sel_df = sel_df.resample("1min").ffill()
 #     sel_df.sort_index(inplace=True)
-#     print("df-->",sel_df.shape)
     # create bt and other vars
     sel_df["bt"] = np.sqrt(np.square(sel_df["by_gsm"]) + np.square(sel_df["bz_gsm"]))
     sel_df["theta_c"] = np.round(np.arctan2(sel_df["by_gsm"], sel_df["bz_gsm"]), 2) % (2*np.pi)
     sel_df["dPhi_dt"] = (sel_df["speed"]**(4./3)) * (sel_df["bt"] ** (2./3)) * (np.sin(sel_df["theta_c"] / 2.))**(8./3)
     
 #     sel_df.interpolate(method='linear', limit_direction='both', inplace=True)
-    if sel_df.isnull().sum().sum() == sel_df.size:
-        print("nulls-->", sel_df.isnull().sum().sum())
-        return (-12.,-12.)
+    sel_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    sel_df = sel_df.interpolate(method='linear', axis=0).ffill().bfill()
+    if sel_df.isnull().sum().sum() > sel_df.shape[0]:
+        return (dst_mean,dst_mean)
     
     # Normalize the cols
     for _par in col_list:
@@ -279,7 +279,7 @@ def XGB(
     prediction_at_t0 = prediction_at_t0*dst_std+dst_mean
     prediction_at_t1 = bst_t1.predict(input_data_dm)
     prediction_at_t1 = prediction_at_t1*dst_std+dst_mean
-#     print("prediction_at_t0,prediction_at_t1-->",prediction_at_t0[0], prediction_at_t1[0])
+    print("prediction_at_t0,prediction_at_t1-->",prediction_at_t0[0], prediction_at_t1[0])
     
     return (prediction_at_t0[0], prediction_at_t1[0])
 
