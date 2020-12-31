@@ -200,18 +200,17 @@ def LR(
     Xs = Xs.reshape((1, len(params)))
     print(" Shape: ", Xs.shape)
     dst = []
-    
-    for t in range(2):
-        print(" T(%s) instance ... "%t)
-        clf = load_LR_model("clf_t%d.json"%t, ds)
-        reg_0, reg_1 = load_LR_model("reg_t%d_0.json"%t, ds), load_LR_model("reg_t%d_1.json"%t, ds)
-        tag = ((clf.predict_proba(Xs) < 0.5).astype(int))[0,0]
-        print( "Prob. (No-Storm):%.2f"%clf.predict_proba(Xs)[0,0], " - Tag: ", tag )
-        if tag == 0: dst.append(reg_0.predict(Xs)[0])
-        if tag == 1: dst.append(reg_1.predict(Xs)[0])
-    print(" Predictions Dst - ",tuple(dst))
-    
+    prediction_at_t0, prediction_at_t1 = np.nan, np.nan
     try:
+        for t in range(2):
+            print(" T(%s) instance ... "%t)
+            clf = load_LR_model("clf_t%d.json"%t, ds)
+            reg_0, reg_1 = load_LR_model("reg_t%d_0.json"%t, ds), load_LR_model("reg_t%d_1.json"%t, ds)
+            tag = ((clf.predict_proba(Xs) < 0.5).astype(int))[0,0]
+            print( "Prob. (No-Storm):%.2f"%clf.predict_proba(Xs)[0,0], " - Tag: ", tag )
+            if tag == 0: dst.append(reg_0.predict(Xs)[0])
+            if tag == 1: dst.append(reg_1.predict(Xs)[0])
+        print(" Predictions Dst - ",tuple(dst))
         prediction_at_t0, prediction_at_t1 = dst[0], dst[1]
         prediction_at_t0, prediction_at_t1 = check_dst_lims(prediction_at_t0), check_dst_lims(prediction_at_t1)
     except: 
