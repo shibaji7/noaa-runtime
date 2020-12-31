@@ -247,8 +247,8 @@ def XGB(
     sel_df["dPhi_dt"] = (sel_df["speed"]**(4./3)) * (sel_df["bt"] ** (2./3)) * (np.sin(sel_df["theta_c"] / 2.))**(8./3)
     
 #     sel_df.interpolate(method='linear', limit_direction='both', inplace=True)
-    sel_df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    sel_df = sel_df.interpolate(method='linear', axis=0).ffill().bfill()
+#     sel_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+#     sel_df = sel_df.interpolate(method='linear', axis=0).ffill().bfill()
     if sel_df.isnull().sum().sum() > sel_df.shape[0]:
         return (dst_mean,dst_mean)
     
