@@ -18,6 +18,11 @@ import xgboost
 
 Dst_stats = {"mean": -11.055236, "std": 19.069327}
 
+
+def Handler(signum, frame):
+    print("Forever is over!")
+    raise Exception("end of time")
+    
 def check_dst_lims( 
     dst: float,
     lims: list = [500, -2000]
@@ -28,6 +33,19 @@ def check_dst_lims(
     dst = (dst * Dst_stats["std"]) + Dst_stats["mean"]
     if dst > lims[0]: dst = lims[0]
     if dst < lims[1]: dst = lims[1]
+    return dst
+
+def check_lims( 
+    dst: Tuple[float, float],
+    lims: list = [500, -2000]
+) -> Tuple[float, float]:
+    """ 
+    Limits outputs to [500, -2000] nT range.
+    """
+    if dst[0] > lims[0]: dst[0] = lims[0]
+    if dst[0] < lims[1]: dst[0] = lims[1]
+    if dst[1] > lims[0]: dst[1] = lims[0]
+    if dst[1] < lims[1]: dst[1] = lims[1]
     return dst
 
 # Define functions for preprocessing
@@ -107,15 +125,7 @@ def LSTM(
 
     # Set global variables    
     TIMESTEPS = CONFIG["timesteps"]
-    SOLAR_WIND_FEATURES = [
-        "bt",
-        "temperature",
-        "bx_gse",
-        "by_gse",
-        "bz_gse",
-        "speed",
-        "density",
-    ]
+    SOLAR_WIND_FEATURES = CONFIG["solar_wind_subset"]
     XCOLS = (
         [col + "_mean" for col in SOLAR_WIND_FEATURES]
         + [col + "_std" for col in SOLAR_WIND_FEATURES]
@@ -136,8 +146,7 @@ def LSTM(
     # Make a prediction
     prediction_at_t0, prediction_at_t1 = model.predict(model_input)[0]
 
-    prediction_at_t0 = check_dst_lims(prediction_at_t0)
-    prediction_at_t1 = check_dst_lims(prediction_at_t1)
+    prediction_at_t0, prediction_at_t1 = check_lims((prediction_at_t0, prediction_at_t1))
     print(" Test - ", prediction_at_t0, prediction_at_t1)
     
     # Optional check for unexpected values

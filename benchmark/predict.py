@@ -4,10 +4,12 @@ from typing import Tuple
 import numpy as np
 import datetime as dt
 
-from models import LSTM, LR, XGB
+import signal
+import traceback
+from models import LSTM, LR, XGB, Handler
 
-REG_NAME = "LR" # [LR, LSTM, GB, XGB]
-DATA_SET = "2h" # [0.5h, 1h, 2h, 6h, 24h, 72h]
+REG_NAME = "LSTM" # [LR, LSTM, GB, XGB]
+DATA_SET = "32h" # [0.5h, 1h, 2h, 6h, 24h, 72h]
 
 # THIS MUST BE DEFINED FOR YOUR SUBMISSION TO RUN
 def predict_dst(
@@ -34,7 +36,16 @@ def predict_dst(
     """
     
     # Make a prediction
-    if REG_NAME == "LSTM": prediction_at_t0, prediction_at_t1 = LSTM(solar_wind_7d, satellite_positions_7d, latest_sunspot_number, DATA_SET)
+    if REG_NAME == "LSTM": 
+        #signal.signal(signal.SIGALRM, Handler)
+        #signal.alarm(25)
+        #try:
+        prediction_at_t0, prediction_at_t1 = LSTM(solar_wind_7d, satellite_positions_7d, latest_sunspot_number, DATA_SET)
+        #except:
+        #    traceback.print_exc()
+        #signal.alarm(0)
+        #prediction_at_t0, prediction_at_t1 = -15, -15
+        #raise Exception("Bug")
     if REG_NAME == "LR": prediction_at_t0, prediction_at_t1 = LR(solar_wind_7d, satellite_positions_7d, latest_sunspot_number, DATA_SET)
     if REG_NAME == "XGB": prediction_at_t0, prediction_at_t1 = XGB(solar_wind_7d, satellite_positions_7d, latest_sunspot_number, DATA_SET)
     

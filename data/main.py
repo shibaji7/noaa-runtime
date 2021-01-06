@@ -16,6 +16,7 @@ import typer
 MIN_DST = -2_000
 MAX_DST = 500
 ROOT_DIRECTORY = Path("/codeexecution")
+#ROOT_DIRECTORY = Path("../")
 RUNTIME_DIRECTORY = ROOT_DIRECTORY / "submission"
 DATA_DIRECTORY = ROOT_DIRECTORY / "data"
 DEFAULT_OUTPUT = ROOT_DIRECTORY / "submission.csv"
